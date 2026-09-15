@@ -15,17 +15,36 @@ Seu contexto de atuação: DesignOps, Branding (visão Ana Couto), Criatividade 
 
 st.title("Kyra OS")
 
+# Sidebar de Configuração e Contexto
 with st.sidebar:
+    st.header("Configurações")
     api_key = st.text_input("Gemini API Key", type="password")
+    
+    st.divider()
+    st.header("Contexto Obsidian (.md)")
+    uploaded_files = st.file_uploader(
+        "Carregar notas do cofre", 
+        type=["md", "txt"], 
+        accept_multiple_files=True
+    )
 
 if not api_key:
     st.info("Insira sua Gemini API Key na barra lateral para iniciar.")
     st.stop()
 
+# Leitura e concatenação dos arquivos do Obsidian carregados
+vault_context = ""
+if uploaded_files:
+    vault_context = "\n\n--- NOTAS DO OBSIDIAN CARREGADAS ---\n"
+    for file in uploaded_files:
+        content = file.read().decode("utf-8")
+        vault_context += f"\n[Arquivo: {file.name}]\n{content}\n"
+
 genai.configure(api_key=api_key)
+full_system_instruction = SYSTEM_PROMPT + vault_context
 model = genai.GenerativeModel(
     model_name="gemini-1.5-flash",
-    system_instruction=SYSTEM_PROMPT
+    system_instruction=full_system_instruction
 )
 
 if "messages" not in st.session_state:
